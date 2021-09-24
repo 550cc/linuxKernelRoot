@@ -77,10 +77,10 @@ void test_run_adb_shell(char * shell, bool bKeepAdbRoot = false) {
 	printf("inject_shell_remote_process result:%s\n", szResult);
 }
 
-void test_run_shell(char * shell) {
+void test_run_root_shell(char * shell) {
 	printf("test_run_shell(%s)\n", shell);
 	char szResult[0x1000] = { 0 };
-	ssize_t ret = safe_run_shell(ROOT_KEY, shell, szResult, sizeof(szResult));
+	ssize_t ret = run_root_shell(ROOT_KEY, shell, szResult, sizeof(szResult));
 	printf("test_run_shell ret val:%zd\n", ret);
 	printf("test_run_shell result:%s\n", szResult);
 }
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 		"\t3.绕过SELinux\n"
 		"\t4.还原SELinux\n"
 		"\t5.执行ROOT Shell命令\n"
-		"\t6.执行ADBShell命令\n"
+		"\t6.执行ADB Shell命令\n"
 		"\t7.赋予ADB最高级别权限\n"
 		"\t新一代root，跟面具完全不同思路，摆脱面具被检测的弱点，完美隐藏root功能，挑战全网root检测手段，兼容安卓APP直接JNI调用，稳定、流畅、不闪退。\n"
 		"======================================================\n"
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 		for (int i = 1; i < argc; i++) {
 			sstrCmd << argv[i];
 		}
-		test_run_shell((char*)sstrCmd.str().c_str());
+		test_run_root_shell((char*)sstrCmd.str().c_str());
 	}
 	else if (argc > 2 && strcmp(argv[0], "adb") == 0 && strcmp(argv[1], "shell") == 0) {
 		std::stringstream sstrCmd;
