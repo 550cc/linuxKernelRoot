@@ -1,3 +1,11 @@
+	项目说明：
+	1.【find_kernel_func】 自动寻找内核函数位置
+	2.【ida_patch_cmd_creator】 根据内核函数位置自动生成IDA补丁代码
+	3.【testRoot】 演示全部ROOT功能的调用方法
+	4.【su】 授予ROOT到第三方进程的演示
+	5.【suTest】模拟第三方进程获取ROOT权限的APP
+	6.【PermissionManager】以APP形式演示全部ROOT功能的调用方法
+	
 	printf(
 		"======================================================\n"
 		"本工具名称: Linux ARM64 完美隐藏ROOT演示\n"
