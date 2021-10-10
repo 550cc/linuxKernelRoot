@@ -86,15 +86,15 @@ void test_run_root_cmd(const char * shell) {
 	printf("test_run_root_cmd result:%s\n", szResult);
 }
 
-void test_su_allow(unsigned int pid, const char * su_folder_path) {
-	printf("test_su_inject(%d, %s)\n", pid, su_folder_path);
+void test_su_env_inject(unsigned int pid, const char * su_folder_path) {
+	printf("test_su_env_inject(%d, %s)\n", pid, su_folder_path);
 	ssize_t ret = inject_process_env64_PATH_wrapper(ROOT_KEY, pid, su_folder_path);
-	printf("test_su_inject ret val:%zd\n", ret);
+	printf("test_su_env_inject ret val:%zd\n", ret);
 }
 
-void test_auto_su_allow(const char* target_cmdline, const char * su_folder_path) 
+void test_auto_su_env_inject(const char* target_cmdline, const char * su_folder_path)
 {
-	printf("test_auto_su_allow Waiting for process creation(%s, %s)\n", target_cmdline, su_folder_path);
+	printf("test_auto_su_env_inject Waiting for process creation(%s, %s)\n", target_cmdline, su_folder_path);
 
 	int pid = -1;
 	while (1)
@@ -107,9 +107,9 @@ void test_auto_su_allow(const char* target_cmdline, const char * su_folder_path)
 		}
 		break;
 	}
-	printf("test_auto_su_allow(%d, %s)\n", pid, su_folder_path);
+	printf("test_auto_su_env_inject(%d, %s)\n", pid, su_folder_path);
 	ssize_t ret = inject_process_env64_PATH_wrapper(ROOT_KEY, pid, su_folder_path);
-	printf("test_auto_su_allow ret val:%zd\n", ret);
+	printf("test_auto_su_env_inject ret val:%zd\n", ret);
 }
 int main(int argc, char *argv[])
 {
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
 		unsigned int target_pid = 0;
 		sstrCmd >> target_pid;
 		if (target_pid) {
-			test_su_allow(target_pid, "/data/local/tmp");
+			test_su_env_inject(target_pid, "/data/local/tmp");
 		}
 		
 	}
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
 		std::stringstream sstrCmd;
 		sstrCmd << argv[1];
 		if (sstrCmd.str().length()) {
-			test_auto_su_allow(sstrCmd.str().c_str(), "/data/local/tmp");
+			test_auto_su_env_inject(sstrCmd.str().c_str(), "/data/local/tmp");
 		}
 
 	}
