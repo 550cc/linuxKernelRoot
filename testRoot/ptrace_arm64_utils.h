@@ -1,5 +1,5 @@
-﻿#ifndef PTRACE_UTILS_H_
-#define PTRACE_UTILS_H_
+﻿#ifndef PTRACE_ARM64_UTILS_H_
+#define PTRACE_ARM64_UTILS_H_
 #include <unistd.h>
 
 //安静输出模式
@@ -59,4 +59,4 @@ int ptrace_call_wrapper(pid_t target_pid, const char * func_name, void * func_ad
 */
 int ptrace_call(pid_t pid, uintptr_t addr, unsigned long *params, int num_params, struct pt_regs* regs);
 
-#endif /* PTRACE_UTILS_H_ */
+#endif /* PTRACE_ARM64_UTILS_H_ */

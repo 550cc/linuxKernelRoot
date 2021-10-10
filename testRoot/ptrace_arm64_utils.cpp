@@ -244,4 +244,3 @@ int ptrace_call(pid_t pid, uintptr_t addr, unsigned long *params, int num_params
 
 	return 0;
 }
-

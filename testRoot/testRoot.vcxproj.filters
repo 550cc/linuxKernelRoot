@@ -1,9 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="ptrace_arm64_utils.cpp" />
-    <ClCompile Include="adb_inject.cpp" />
+    <ClCompile Include="maps_helper.cpp" />
+    <ClCompile Include="adb64_inject.cpp" />
+    <ClCompile Include="env64_inject.cpp" />
+    <ClCompile Include="testRoot.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="jni">
@@ -21,6 +23,9 @@
   <ItemGroup>
     <ClInclude Include="super_root.h" />
     <ClInclude Include="ptrace_arm64_utils.h" />
-    <ClInclude Include="adb_inject.h" />
+    <ClInclude Include="maps_helper.h" />
+    <ClInclude Include="adb64_inject.h" />
+    <ClInclude Include="env64_inject.h" />
+    <ClInclude Include="testRoot.h" />
   </ItemGroup>
 </Project>

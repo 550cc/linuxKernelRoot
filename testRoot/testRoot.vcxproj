@@ -75,8 +75,10 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
-    <ClCompile Include="adb_inject.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="adb64_inject.cpp" />
+    <ClCompile Include="testRoot.cpp" />
+    <ClCompile Include="env64_inject.cpp" />
+    <ClCompile Include="maps_helper.cpp" />
     <ClCompile Include="ptrace_arm64_utils.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -84,9 +86,12 @@
     <None Include="jni\Application.mk" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="adb_inject.h" />
+    <ClInclude Include="adb64_inject.h" />
+    <ClInclude Include="env64_inject.h" />
+    <ClInclude Include="maps_helper.h" />
     <ClInclude Include="ptrace_arm64_utils.h" />
     <ClInclude Include="super_root.h" />
+    <ClInclude Include="testRoot.h" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
