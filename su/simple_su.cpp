@@ -10,21 +10,20 @@
 #include "../testRoot/super_root.h"
 
 
+#define ROOT_KEY 0x7F6766F8
 
 //   su -->  argv[0]    argv[1] == NULL
 //   su -->  argv[0]    argv[1] == "stu"
 int main(int argc, char *argv[])
 {
 	const char *user = "root";
-	if (argv[1] != NULL)
-	{
+	if (argv[1] != NULL) {
 		user = argv[1];
 	}
 
 	pid_t n = fork();
 	assert(-1 != n);
-	if (0 == n)
-	{
+	if (0 == n) {
 		struct passwd *pw = getpwnam(user);  //  passwd结构体指针指向的是新用户的信息
 		assert(pw != NULL);
 
@@ -36,10 +35,8 @@ int main(int argc, char *argv[])
 		execl(pw->pw_shell, pw->pw_shell, (char*)0);  //  main函数的参数至少有一个（执行进程的命令）
 		perror("execl error: ");
 	}
-	else
-	{
+	else {
 		wait(NULL);  //  等创建的子进程(新启动bash)退出
 	}
-
 	exit(0);
 }

@@ -3,8 +3,7 @@
   <ItemGroup>
     <ClCompile Include="su.cpp" />
     <ClCompile Include="simple_su.cpp" />
-    <ClCompile Include="pts.cpp" />
-    <ClCompile Include="su_client.h" />
+    <ClCompile Include="base64.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="jni">
@@ -21,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="su.h" />
-    <ClInclude Include="pts.hpp" />
+    <ClInclude Include="root_key_helper.h" />
+    <ClInclude Include="base64.h" />
   </ItemGroup>
 </Project>

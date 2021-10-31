@@ -21,8 +21,11 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
-        ../../../../../testRoot/adb_inject.cpp
+        ../../../../../testRoot/process64_inject.cpp
+        ../../../../../testRoot/adb64_helper.cpp
         ../../../../../testRoot/ptrace_arm64_utils.cpp
+        ../../../../../testRoot/su_install_helper.cpp
+        ../../../../../testRoot/base64.cpp
         root.cpp)
 
 # Searches for a specified prebuilt library and stores the path as a

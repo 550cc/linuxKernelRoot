@@ -11,12 +11,6 @@
 #define TRACE(fmt, ...) printf(fmt, ##__VA_ARGS__)
 #endif
 
-
-#define ROOT_KEY 0x7F6766F8
-
-#define DEFAULT_MAIN_SOCKET "d40138f231789fb9c54a3e0c21f58591"
-
-
 #define DEFAULT_SHELL "/system/bin/sh"
 
 // Constants for atty

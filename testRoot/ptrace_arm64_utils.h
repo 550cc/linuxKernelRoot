@@ -1,15 +1,8 @@
 ﻿#ifndef PTRACE_ARM64_UTILS_H_
 #define PTRACE_ARM64_UTILS_H_
+#include "testRoot.h"
+
 #include <unistd.h>
-
-//安静输出模式
-//#define QUIET_PRINTF
-
-#ifdef QUIET_PRINTF
-#define TRACE(fmt, ...)
-#else
-#define TRACE(fmt, ...) printf(fmt, ##__VA_ARGS__)
-#endif
 
 #ifndef __aarch64__
 #error "Not supported"  
