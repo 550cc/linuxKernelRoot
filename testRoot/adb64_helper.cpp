@@ -97,7 +97,7 @@ pid_t safe_find_adbd_pid(unsigned int root_key)
 		pid_t ret = find_adb_pid(root_key);
 		write(fd[1], &ret, sizeof(ret));
 		close(fd[1]); //close write pipe
-		exit(0);
+		force_kill_myself();
 	}
 	else { /*父进程*/
 
@@ -105,25 +105,74 @@ pid_t safe_find_adbd_pid(unsigned int root_key)
 
 		int status;
 		/* 等待目标进程停止或终止. WUNTRACED - 解释见参考手册 */
-		if (waitpid(pid, &status, WNOHANG | WUNTRACED) < 0) { return -6; }
+		if (waitpid(pid, &status, WUNTRACED) < 0) { return -6; }
 
 		pid_t ret = -413;
 		read(fd[0], (void*)&ret, sizeof(ret));
+		
 		close(fd[0]); //close read pipe
 		return ret;
 	}
 	return -414;
 }
 
-void kill_process(unsigned int root_key, pid_t pid) {
+int kill_adbd_process(unsigned int root_key) {
+	pid_t adb_pid = find_adb_pid(root_key);
+	if (adb_pid < 0) {
+		TRACE("Could not found the ADB daemon process.Please open ADB.\n");
+		return -420;
+	}
 	char kill_shell[256] = { 0 };
-	snprintf(kill_shell, sizeof(kill_shell), "kill -9 %d", pid);
-	int ret = run_normal_cmd(root_key, kill_shell);
+	snprintf(kill_shell, sizeof(kill_shell), "kill -9 %d", adb_pid);
+	return run_normal_cmd(root_key, kill_shell);
 }
-void safe_kill_process(unsigned int root_key, pid_t pid) {
+int safe_kill_adbd_process(unsigned int root_key) {
+
+	int fd[2];
+	if (pipe(fd))
+	{
+		return -421;
+	}
+
+	pid_t pid;
+	if ((pid = fork()) < 0) {
+		//fork error
+		return -422;
+
+	}
+	else if (pid == 0) { /* 子进程 */
+		close(fd[0]); //close read pipe
+		pid_t ret = kill_adbd_process(root_key);
+		write(fd[1], &ret, sizeof(ret));
+		close(fd[1]); //close write pipe
+		force_kill_myself();
+	}
+	else { /*父进程*/
+
+		close(fd[1]); //close write pipe
+
+		int status;
+		/* 等待目标进程停止或终止. WUNTRACED - 解释见参考手册 */
+		if (waitpid(pid, &status, WUNTRACED) < 0) { return -6; }
+
+		pid_t ret = -423;
+		read(fd[0], (void*)&ret, sizeof(ret));
+		
+		close(fd[0]); //close read pipe
+		return ret;
+	}
+	return -424;
+}
+
+int kill_process(unsigned int root_key, pid_t pid) {
 	char kill_shell[256] = { 0 };
 	snprintf(kill_shell, sizeof(kill_shell), "kill -9 %d", pid);
-	int ret = safe_run_normal_cmd(root_key, kill_shell);
+	return run_normal_cmd(root_key, kill_shell);
+}
+int safe_kill_process(unsigned int root_key, pid_t pid) {
+	char kill_shell[256] = { 0 };
+	snprintf(kill_shell, sizeof(kill_shell), "kill -9 %d", pid);
+	return safe_run_normal_cmd(root_key, kill_shell);
 }
 
 
@@ -142,7 +191,7 @@ ssize_t inject_adbd64_run_cmd_wrapper(unsigned int root_key,
 	pid_t adb_pid = find_adb_pid(root_key);
 	if (adb_pid < 0) {
 		TRACE("Could not found the ADB daemon process.Please open ADB.\n");
-		return adb_pid;
+		return -430;
 	}
 	ssize_t ret = inject_process64_run_cmd_wrapper(root_key, adb_pid, cmd, p_out_result_buf, out_result_buf_size, user_root_auth, after_recovery_last_uid, after_recovery_last_gid, chdir_path, clear_env, set_env);
 
@@ -166,7 +215,7 @@ ssize_t safe_inject_adbd64_run_cmd_wrapper(unsigned int root_key,
 	pid_t adb_pid = safe_find_adbd_pid(root_key);
 	if (adb_pid < 0) {
 		TRACE("Could not found the ADB daemon process.Please open ADB.\n");
-		return adb_pid;
+		return -431;
 	}
 	ssize_t ret = safe_inject_process64_run_cmd_wrapper(root_key, adb_pid, cmd, p_out_result_buf, out_result_buf_size, user_root_auth, after_recovery_last_uid, after_recovery_last_gid, chdir_path, clear_env, set_env);
 

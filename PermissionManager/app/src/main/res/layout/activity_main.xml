@@ -110,10 +110,18 @@
 
             <Button
                 android:layout_marginTop="5dp"
-                android:id="@+id/su_env_inject_btn"
+                android:id="@+id/su_env_inject_btn1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="8.授权ROOT到其他APP"
+                android:text="8.授权ROOT到其他APP-[1]"
+                />
+
+            <Button
+                android:layout_marginTop="5dp"
+                android:id="@+id/su_env_inject_btn2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="8.授权ROOT到其他APP-[2]"
                 />
 
             <Button

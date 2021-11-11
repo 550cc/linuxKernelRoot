@@ -23,13 +23,13 @@
 const char* check_file_list[] = {
 	"su",
 };
-std::string get_child_su_hidden_path(const char* myself_path) {
+std::string get_child_su_hidden_path(const char* myself_path, const char* su_hidden_folder_head_flag) {
 
 	std::string id;
 	DIR* dir;
 	FILE *fp;
 	struct dirent * entry;
-	const char* su_head = "su_";
+	const char* su_head = su_hidden_folder_head_flag;
 
 	dir = opendir(myself_path);
 	if (dir == NULL)
@@ -75,7 +75,7 @@ void rand_str(char* dest, int n)
 	*dest = '\0';
 }
 
-std::string create_su_hidden_path(const char* myself_path, unsigned int root_key) {
+std::string create_su_hidden_path(const char* myself_path, unsigned int root_key, const char* su_hidden_folder_head_flag) {
 
 	//1.生成一个guid
 	char guid[16 + 1] = { 0 };
@@ -90,7 +90,8 @@ std::string create_su_hidden_path(const char* myself_path, unsigned int root_key
 
 	//4.拼接进路径
 	std::string file_path = myself_path;
-	file_path += "/su_";
+	file_path += "/";
+	file_path += su_hidden_folder_head_flag;
 	file_path += base64;
 	if (mkdir(file_path.c_str(), 0755)) {
 		TRACE("create_su_hidden_path error:%s\n", file_path.c_str());
@@ -183,7 +184,7 @@ bool del_su_file(const char* path) {
 	}
 	return true;
 }
-int install_su_tools(unsigned int root_key, const char* base_path, std::string & su_hidden_path) {
+int install_su_tools(unsigned int root_key, const char* base_path, std::string & su_hidden_path, const char* su_hidden_folder_head_flag/* = "su"*/) {
 
 	if (get_root(root_key) != 0) {
 		return -501;
@@ -194,16 +195,18 @@ int install_su_tools(unsigned int root_key, const char* base_path, std::string &
 			return -502;
 		}
 	}
+	std::string _su_hidden_folder_head_flag = su_hidden_folder_head_flag;
+	_su_hidden_folder_head_flag += "_";
 
 	//1.获取su_xxx隐藏目录
 	std::string _su_hidden_path = base_path;
 	unsigned int tmp_root_key = get_tmp_root_key(base_path); //看看自身路径有没有
 	if (tmp_root_key == 0) {
-		_su_hidden_path = get_child_su_hidden_path(base_path); //没有再看看子目录
+		_su_hidden_path = get_child_su_hidden_path(base_path, _su_hidden_folder_head_flag.c_str()); //没有再看看子目录
 
 		if (_su_hidden_path.empty()) {
 			//2.取不到，那就创建一个
-			_su_hidden_path = create_su_hidden_path(base_path, root_key);
+			_su_hidden_path = create_su_hidden_path(base_path, root_key, _su_hidden_folder_head_flag.c_str());
 		}
 		if (_su_hidden_path.empty()) {
 			TRACE("su_hidden_path empty error\n");
@@ -237,7 +240,7 @@ int install_su_tools(unsigned int root_key, const char* base_path, std::string &
 	return 0;
 }
 
-int safe_install_su_tools(unsigned int root_key, const char* base_path, std::string & su_hidden_path) {
+int safe_install_su_tools(unsigned int root_key, const char* base_path, std::string & su_hidden_path, const char* su_hidden_folder_head_flag/* = "su"*/) {
 	int fd[2];
 	if (pipe(fd)) {
 		return -431;
@@ -251,13 +254,13 @@ int safe_install_su_tools(unsigned int root_key, const char* base_path, std::str
 	}
 	else if (pid == 0) { /* 子进程 */
 		close(fd[0]); //close read pipe
-		pid_t ret = install_su_tools(root_key, base_path, su_hidden_path);
+		pid_t ret = install_su_tools(root_key, base_path, su_hidden_path, su_hidden_folder_head_flag);
 		write(fd[1], &ret, sizeof(ret));
 		char buf[4096] = { 0 };
 		strcpy(buf, su_hidden_path.c_str());
 		write(fd[1], &buf, sizeof(buf));
 		close(fd[1]); //close write pipe
-		exit(0);
+		force_kill_myself();
 	}
 	else { /*父进程*/
 
@@ -265,20 +268,21 @@ int safe_install_su_tools(unsigned int root_key, const char* base_path, std::str
 
 		int status;
 		/* 等待目标进程停止或终止. WUNTRACED - 解释见参考手册 */
-		if (waitpid(pid, &status, WNOHANG | WUNTRACED) < 0) { return -6; }
+		if (waitpid(pid, &status, WUNTRACED) < 0) { return -6; }
 
 		pid_t ret = -433;
 		read(fd[0], (void*)&ret, sizeof(ret));
 		char buf[4096] = { 0 };
 		read(fd[0], (void*)&buf, sizeof(buf));
 		su_hidden_path = buf;
+		
 		close(fd[0]); //close read pipe
 		return ret;
 	}
 	return -434;
 }
 
-int uninstall_su_tools(unsigned int root_key, const char* base_path) {
+int uninstall_su_tools(unsigned int root_key, const char* base_path, const char* su_hidden_folder_head_flag/* = "su"*/) {
 
 	if (get_root(root_key) != 0) {
 		return -511;
@@ -289,13 +293,18 @@ int uninstall_su_tools(unsigned int root_key, const char* base_path) {
 			return -512;
 		}
 	}
+
+	std::string _su_hidden_folder_head_flag = su_hidden_folder_head_flag;
+	_su_hidden_folder_head_flag += "_";
+
+
 	//从自身路径中删除文件，移除痕迹，防止被检测
 	del_su_file(base_path);
 
 	do 
 	{
 		//获取su_xxx隐藏目录
-		std::string _su_hidden_path = get_child_su_hidden_path(base_path); //没有再看看子目录
+		std::string _su_hidden_path = get_child_su_hidden_path(base_path, _su_hidden_folder_head_flag.c_str()); //没有再看看子目录
 		if (_su_hidden_path.empty()) {
 			break;
 		}
@@ -314,7 +323,7 @@ int uninstall_su_tools(unsigned int root_key, const char* base_path) {
 	safe_enable_selinux(root_key);
 	return 0;
 }
-int safe_uninstall_su_tools(unsigned int root_key, const char* base_path) {
+int safe_uninstall_su_tools(unsigned int root_key, const char* base_path, const char* su_hidden_folder_head_flag/* = "su"*/) {
 	int fd[2];
 	if (pipe(fd)) {
 		return -520;
@@ -328,10 +337,10 @@ int safe_uninstall_su_tools(unsigned int root_key, const char* base_path) {
 	}
 	else if (pid == 0) { /* 子进程 */
 		close(fd[0]); //close read pipe
-		int ret = uninstall_su_tools(root_key, base_path);
+		int ret = uninstall_su_tools(root_key, base_path, su_hidden_folder_head_flag);
 		write(fd[1], &ret, sizeof(ret));
 		close(fd[1]); //close write pipe
-		exit(0);
+		force_kill_myself();
 	}
 	else { /*父进程*/
 
@@ -339,10 +348,11 @@ int safe_uninstall_su_tools(unsigned int root_key, const char* base_path) {
 
 		int status;
 		/* 等待目标进程停止或终止. WUNTRACED - 解释见参考手册 */
-		if (waitpid(pid, &status, WNOHANG | WUNTRACED) < 0) { return -6; }
+		if (waitpid(pid, &status, WUNTRACED) < 0) { return -6; }
 
 		int ret = -522;
 		read(fd[0], (void*)&ret, sizeof(ret));
+		
 		close(fd[0]); //close read pipe
 		return ret;
 	}

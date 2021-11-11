@@ -144,7 +144,8 @@ Java_com_linux_permissionmanager_MainActivity_installSuTools(
         jobject /* this */,
         jlong rootKey,
         jstring basePath,
-        jstring suToolsFilePath) {
+        jstring suToolsFilePath,
+        jstring suToolsFileFolderHeadFlags) {
 
     const char *str1 = env->GetStringUTFChars(basePath, 0);
     string strBasePath= str1;
@@ -154,11 +155,15 @@ Java_com_linux_permissionmanager_MainActivity_installSuTools(
     string strSuFilePath= str1;
     env->ReleaseStringUTFChars(suToolsFilePath, str1);
 
+    str1 = env->GetStringUTFChars(suToolsFileFolderHeadFlags, 0);
+    string strSuToolsFileFolderHeadFlags= str1;
+    env->ReleaseStringUTFChars(suToolsFileFolderHeadFlags, str1);
+
     stringstream sstr;
 
     //安装su工具套件
     std::string su_hidden_path;
-    int install_su_tools_ret = safe_install_su_tools(rootKey, strBasePath.c_str(), su_hidden_path);
+    int install_su_tools_ret = safe_install_su_tools(rootKey, strBasePath.c_str(), su_hidden_path, strSuToolsFileFolderHeadFlags.c_str());
     sstr << "install_su_tools ret val:" << install_su_tools_ret<<", su_hidden_path:" << su_hidden_path << std::endl;
 
     if (install_su_tools_ret == -504) {
@@ -169,7 +174,7 @@ Java_com_linux_permissionmanager_MainActivity_installSuTools(
             sstr << "safe_run_normal_cmd cp_ret val:" <<cp_ret;
             return env->NewStringUTF(sstr.str().c_str());
         }
-        install_su_tools_ret = safe_install_su_tools(rootKey, strBasePath.c_str(), su_hidden_path);
+        install_su_tools_ret = safe_install_su_tools(rootKey, strBasePath.c_str(), su_hidden_path, strSuToolsFileFolderHeadFlags.c_str());
         sstr << "install_su_tools ret val:" << install_su_tools_ret<<", su_hidden_path:" << su_hidden_path << std::endl;
     }
     if (install_su_tools_ret != 0) {
@@ -183,15 +188,20 @@ Java_com_linux_permissionmanager_MainActivity_uninstallSuTools(
         JNIEnv* env,
         jobject /* this */,
         jlong rootKey,
-        jstring basePath) {
+        jstring basePath,
+        jstring suToolsFileFolderHeadFlags) {
 
     const char *str1 = env->GetStringUTFChars(basePath, 0);
     string strBasePath= str1;
     env->ReleaseStringUTFChars(basePath, str1);
 
+    str1 = env->GetStringUTFChars(suToolsFileFolderHeadFlags, 0);
+    string strSuToolsFileFolderHeadFlags= str1;
+    env->ReleaseStringUTFChars(suToolsFileFolderHeadFlags, str1);
+
     stringstream sstr;
 
-    int uninstall_su_tools_ret = safe_uninstall_su_tools(rootKey, strBasePath.c_str());
+    int uninstall_su_tools_ret = safe_uninstall_su_tools(rootKey, strBasePath.c_str(), strSuToolsFileFolderHeadFlags.c_str());
     sstr << "uninstallSuTools ret val:" << uninstall_su_tools_ret << std::endl;
 
     if (uninstall_su_tools_ret != 0) {
@@ -201,12 +211,28 @@ Java_com_linux_permissionmanager_MainActivity_uninstallSuTools(
     return env->NewStringUTF(sstr.str().c_str());
 }
 extern "C" JNIEXPORT jstring JNICALL
+Java_com_linux_permissionmanager_MainActivity_killAdbdProcess(
+        JNIEnv* env,
+        jobject /* this */,
+        jlong rootKey) {
+
+    stringstream sstr;
+    int kill_adbd = safe_kill_adbd_process(rootKey);
+    sstr << "kill_adbd ret val:" << kill_adbd << std::endl;
+    if (kill_adbd != 0) {
+        return env->NewStringUTF(sstr.str().c_str());
+    }
+    sstr << "killAdbdProcess done.";
+    return env->NewStringUTF(sstr.str().c_str());
+}
+extern "C" JNIEXPORT jstring JNICALL
 Java_com_linux_permissionmanager_MainActivity_autoSuEnvInject(
         JNIEnv* env,
         jobject /* this */,
         jlong rootKey,
         jstring targetProcessCmdline,
-        jstring basePath) {
+        jstring basePath,
+        jstring suToolsFileFolderHeadFlags) {
 
     const char *str1 = env->GetStringUTFChars(targetProcessCmdline, 0);
     string strTargetProcessCmdline= str1;
@@ -215,6 +241,12 @@ Java_com_linux_permissionmanager_MainActivity_autoSuEnvInject(
     str1 = env->GetStringUTFChars(basePath, 0);
     string strBasePath= str1;
     env->ReleaseStringUTFChars(basePath, str1);
+
+
+    str1 = env->GetStringUTFChars(suToolsFileFolderHeadFlags, 0);
+    string strSuToolsFileFolderHeadFlags= str1;
+    env->ReleaseStringUTFChars(suToolsFileFolderHeadFlags, str1);
+
 
     stringstream sstr;
 
@@ -231,7 +263,7 @@ Java_com_linux_permissionmanager_MainActivity_autoSuEnvInject(
         kill_cmd += std::to_string(t);
         kill_cmd += ";";
     }
-    int kill_ret = run_normal_cmd(rootKey, kill_cmd.c_str());
+    int kill_ret = safe_run_normal_cmd(rootKey, kill_cmd.c_str());
     sstr << "kill_ret ret val:"<< kill_ret << std::endl;
     if (kill_ret != 0) {
         return env->NewStringUTF(sstr.str().c_str());
@@ -239,7 +271,7 @@ Java_com_linux_permissionmanager_MainActivity_autoSuEnvInject(
 
     //注入su环境变量到指定进程
     std::string su_hidden_path;
-    int install_su_tools_ret = safe_install_su_tools(rootKey, strBasePath.c_str(), su_hidden_path);
+    int install_su_tools_ret = safe_install_su_tools(rootKey, strBasePath.c_str(), su_hidden_path, strSuToolsFileFolderHeadFlags.c_str());
     sstr << "install_su_tools ret val:" << install_su_tools_ret<<", su_hidden_path:" << su_hidden_path << std::endl;
     if (install_su_tools_ret != 0) {
         return env->NewStringUTF(sstr.str().c_str());

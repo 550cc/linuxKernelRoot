@@ -31,4 +31,6 @@ ssize_t safe_inject_adbd64_run_cmd_wrapper(
 	bool clear_env = false,
 	std::vector<process64_env> *set_env = NULL);
 
+int kill_adbd_process(unsigned int root_key);
+int safe_kill_adbd_process(unsigned int root_key);
 #endif /* ADB_HELPER_H_ */

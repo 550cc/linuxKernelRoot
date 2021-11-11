@@ -44,7 +44,6 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private long rootKey = 0x7F6766F8;
-
     private String suBasePath = "/data/local/tmp";
 
     //保存的本地配置信息
@@ -193,26 +192,51 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Button su_env_inject_btn = findViewById(R.id.su_env_inject_btn);
-        su_env_inject_btn.setOnClickListener(new View.OnClickListener() {
+        Button su_env_inject_btn1 = findViewById(R.id.su_env_inject_btn1);
+        su_env_inject_btn1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!guideOpenUsbDebugSwitch()) {
                     return;
                 }
                 //1.获取su工具文件路径
-                String suToolsFilePath = WirteSuToolsFilePath(MainActivity.this);
+                String suToolsFilePath = WirteSuToolsFilePath("simple_su", MainActivity.this);
                 showConsoleMsg(suToolsFilePath);
 
                 //2.安装su工具
-                String insRet = installSuTools(rootKey, suBasePath, suToolsFilePath);
+                String suFolderHeadFlag = "su_ver1";
+                String insRet = installSuTools(rootKey, suBasePath, suToolsFilePath, suFolderHeadFlag);
                 showConsoleMsg(insRet);
                 if(insRet.indexOf("installSuTools done.") == -1) {
                     return;
                 }
 
                 //3.选择APP进程
-                showSelectAppWindow();
+                showSelectAppWindow(suFolderHeadFlag);
+
+            }
+        });
+        Button su_env_inject_btn2 = findViewById(R.id.su_env_inject_btn2);
+        su_env_inject_btn2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!guideOpenUsbDebugSwitch()) {
+                    return;
+                }
+                //1.获取su工具文件路径
+                String suToolsFilePath = WirteSuToolsFilePath("su", MainActivity.this);
+                showConsoleMsg(suToolsFilePath);
+
+                //2.安装su工具
+                String suFolderHeadFlag = "su_ver2";
+                String insRet = installSuTools(rootKey, suBasePath, suToolsFilePath,suFolderHeadFlag);
+                showConsoleMsg(insRet);
+                if(insRet.indexOf("installSuTools done.") == -1) {
+                    return;
+                }
+
+                //3.选择APP进程
+                showSelectAppWindow(suFolderHeadFlag);
 
             }
         });
@@ -221,7 +245,9 @@ public class MainActivity extends AppCompatActivity {
         clean_su_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showConsoleMsg(uninstallSuTools(rootKey,suBasePath));
+                //让adbd自我重启
+                showConsoleMsg(killAdbdProcess(rootKey));
+                showConsoleMsg(uninstallSuTools(rootKey,suBasePath, "su"));
             }
         });
 
@@ -279,7 +305,7 @@ public class MainActivity extends AppCompatActivity {
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this)
                     .setTitle("提示")
                     .setCancelable(false)
-                    .setMessage("请先到开发者选项页面里打开【USB调试】开关（提示：在手机关于页面里连续点击系统版本号可启用开发者选项页面）")
+                    .setMessage("请先到开发者选项页面里【打开USB调试】开关（提示：在手机关于页面里连续点击系统版本号可启用开发者选项页面）")
                     .setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
                         public void onDismiss(DialogInterface dialog) {
@@ -311,7 +337,7 @@ public class MainActivity extends AppCompatActivity {
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this)
                     .setTitle("提示")
                     .setCancelable(false)
-                    .setMessage("请先到开发者选项页面里关闭【USB调试】开关")
+                    .setMessage("请先到开发者选项页面里【关闭USB调试】开关")
                     .setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
                         public void onDismiss(DialogInterface dialog) {
@@ -352,7 +378,7 @@ public class MainActivity extends AppCompatActivity {
 
             new Thread() {
                 public void run() {
-                    String ret = autoSuEnvInject(rootKey, appItem.getPackageName(), suBasePath);
+                    String ret = autoSuEnvInject(rootKey, appItem.getPackageName(), suBasePath, appItem.getSuFolderHeadFlag());
                     runOnUiThread(new Runnable() {
                         public void run() {
                             showConsoleMsg(ret);
@@ -388,7 +414,7 @@ public class MainActivity extends AppCompatActivity {
     };
 
     //显示选择应用程序窗口
-    public void showSelectAppWindow() {
+    public void showSelectAppWindow(String suFolderHeadFlag) {
         final PopupWindow popupWindow = new PopupWindow(this);
 
         View view = View.inflate(this, R.layout.select_app_wnd, null);
@@ -456,7 +482,8 @@ public class MainActivity extends AppCompatActivity {
             appList.add(new SelectAppRecyclerItem(
                     icon,
                     showName,
-                    packageName));
+                    packageName,
+                    suFolderHeadFlag));
         }
         for (int i = 0; i < packages.size(); i++) {
             PackageInfo packageInfo = packages.get(i);
@@ -476,7 +503,8 @@ public class MainActivity extends AppCompatActivity {
             appList.add(new SelectAppRecyclerItem(
                     icon,
                     showName,
-                    packageName));
+                    packageName,
+                    suFolderHeadFlag));
         }
 
         SelectAppRecyclerAdapter adapter = new SelectAppRecyclerAdapter(
@@ -491,18 +519,17 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public static String WirteSuToolsFilePath(Context context) {
-        String suFileName = "su";
+    public static String WirteSuToolsFilePath(String suName, Context context) {
         String suFilePath = "";
         try {
-            suFilePath = context.getFilesDir().getPath() + "/" + suFileName;
+            suFilePath = context.getFilesDir().getPath() + "/" + suName;
             File file = new File(suFilePath);
             if (!file.exists()) {
                 if (!file.getParentFile().exists()) file.getParentFile().mkdirs();
                 file.createNewFile();
             }
             if (file.exists()) {
-                InputStream inputStream = context.getAssets().open(suFileName);
+                InputStream inputStream = context.getAssets().open(suName);
                 FileOutputStream outputStream = new FileOutputStream(file);
                 byte[] content = new byte[1024];
                 while (inputStream.read(content) > 0) {
@@ -532,9 +559,11 @@ public class MainActivity extends AppCompatActivity {
 
     public native String adbRoot(long rootKey);
 
-    public native String installSuTools(long rootKey, String basePath, String suToolsFilePath);
+    public native String installSuTools(long rootKey, String basePath, String suToolsFilePath, String suToolsFileFolderHeadFlags);
 
-    public native String uninstallSuTools(long rootKey, String basePath);
+    public native String uninstallSuTools(long rootKey, String basePath, String suToolsFileFolderHeadFlags);
 
-    public native String autoSuEnvInject(long rootKey, String targetProcessCmdline, String basePath);
+    public native String killAdbdProcess(long rootKey);
+
+    public native String autoSuEnvInject(long rootKey, String targetProcessCmdline, String basePath, String suToolsFileFolderHeadFlags);
 }

@@ -36,7 +36,6 @@ void show_capability_info()
 
 	cap_header->pid = getpid();
 	cap_header->version = _LINUX_CAPABILITY_VERSION_3; //_1、_2、_3
-
 	if (capget(cap_header, cap_data) < 0) {
 		perror("FAILED capget()");
 		return;
@@ -118,7 +117,7 @@ void test_su_env_inject(const char* target_pid_cmdline)
 
 	//1.安装su工具套件
 	std::string su_hidden_path;
-	int install_su_tools_ret = install_su_tools(ROOT_KEY, myself_path, su_hidden_path);
+	int install_su_tools_ret = install_su_tools(ROOT_KEY, myself_path, su_hidden_path, "su");
 	printf("install_su_tools ret val:%d\n", install_su_tools_ret);
 	if (install_su_tools_ret != 0) {
 		return;
@@ -157,8 +156,12 @@ void test_clean_su_env() {
 	char processname[1024];
 	get_executable_path(myself_path, processname, sizeof(myself_path));
 	TRACE("my directory:%s\nprocessname:%s\n", myself_path, processname);
+	
+	//让adbd自我重启
+	int kill_adbd = kill_adbd_process(ROOT_KEY);
+	printf("kill_adbd ret val:%d\n", kill_adbd);
 
-	int uninstall_su_tools_ret = uninstall_su_tools(ROOT_KEY, myself_path);
+	int uninstall_su_tools_ret = uninstall_su_tools(ROOT_KEY, myself_path, "su");
 	printf("test_clean_su_env ret val:%d\n", uninstall_su_tools_ret);
 }
 

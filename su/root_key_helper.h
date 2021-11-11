@@ -8,13 +8,11 @@ static inline unsigned int get_tmp_root_key(const char* myself_path) {
 
 	//1.È¡Â·¾¶Î²°Í
 	unsigned int key = 0;
-	const char* head_flag = "/su_";
-	size_t len = strlen(head_flag);
-	char *pstart = strstr((char*)myself_path, head_flag);
+	char *pstart = strrchr((char*)myself_path, '_');
 	if (!pstart) {
 		return 0;
 	}
-	pstart += len;
+	pstart ++;
 
 	size_t copy_len;
 	char *pend = strstr(pstart, "/");

@@ -122,7 +122,7 @@ static int safe_find_all_cmdline_process(unsigned int root_key, const char* targ
 			write(fd[1], &t, sizeof(t));
 		}
 		close(fd[1]); //close write pipe
-		exit(0);
+		force_kill_myself();
 	}
 	else { /*父进程*/
 
@@ -130,7 +130,7 @@ static int safe_find_all_cmdline_process(unsigned int root_key, const char* targ
 
 		int status;
 		/* 等待目标进程停止或终止. WUNTRACED - 解释见参考手册 */
-		if (waitpid(pid, &status, WNOHANG | WUNTRACED) < 0) { return -6; }
+		if (waitpid(pid, &status, WUNTRACED) < 0) { return -6; }
 
 		int ret = -1002;
 		read(fd[0], (void*)&ret, sizeof(ret));
@@ -233,7 +233,7 @@ static int safe_wait_and_find_cmdline_process(unsigned int root_key, const char*
 		int ret = wait_and_find_cmdline_process(root_key, target_cmdline);
 		write(fd[1], &ret, sizeof(ret));
 		close(fd[1]); //close write pipe
-		exit(0);
+		force_kill_myself();
 	}
 	else { /*父进程*/
 
@@ -241,7 +241,7 @@ static int safe_wait_and_find_cmdline_process(unsigned int root_key, const char*
 
 		int status;
 		/* 等待目标进程停止或终止. WUNTRACED - 解释见参考手册 */
-		if (waitpid(pid, &status, WNOHANG | WUNTRACED) < 0) { return -6; }
+		if (waitpid(pid, &status, WUNTRACED) < 0) { return -6; }
 
 		int ret = -1002;
 		read(fd[0], (void*)&ret, sizeof(ret));
