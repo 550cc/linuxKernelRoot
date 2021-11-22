@@ -192,8 +192,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Button su_env_inject_btn1 = findViewById(R.id.su_env_inject_btn1);
-        su_env_inject_btn1.setOnClickListener(new View.OnClickListener() {
+        Button su_env_inject_btn = findViewById(R.id.su_env_inject_btn);
+        su_env_inject_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!guideOpenUsbDebugSwitch()) {
@@ -206,30 +206,6 @@ public class MainActivity extends AppCompatActivity {
                 //2.安装su工具
                 String suFolderHeadFlag = "su_ver1";
                 String insRet = installSuTools(rootKey, suBasePath, suToolsFilePath, suFolderHeadFlag);
-                showConsoleMsg(insRet);
-                if(insRet.indexOf("installSuTools done.") == -1) {
-                    return;
-                }
-
-                //3.选择APP进程
-                showSelectAppWindow(suFolderHeadFlag);
-
-            }
-        });
-        Button su_env_inject_btn2 = findViewById(R.id.su_env_inject_btn2);
-        su_env_inject_btn2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!guideOpenUsbDebugSwitch()) {
-                    return;
-                }
-                //1.获取su工具文件路径
-                String suToolsFilePath = WirteSuToolsFilePath("su", MainActivity.this);
-                showConsoleMsg(suToolsFilePath);
-
-                //2.安装su工具
-                String suFolderHeadFlag = "su_ver2";
-                String insRet = installSuTools(rootKey, suBasePath, suToolsFilePath,suFolderHeadFlag);
                 showConsoleMsg(insRet);
                 if(insRet.indexOf("installSuTools done.") == -1) {
                     return;
