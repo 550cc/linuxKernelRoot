@@ -77,7 +77,7 @@
   <ItemGroup>
     <ClCompile Include="base64.cpp" />
     <ClCompile Include="simple_su.cpp" />
-    <ClCompile Include="su.cpp" />
+    <ClCompile Include="adb_su.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base64.h" />
