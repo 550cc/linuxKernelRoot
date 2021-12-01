@@ -130,7 +130,7 @@ static int safe_find_all_cmdline_process(unsigned int root_key, const char* targ
 
 		int status;
 		/* 等待目标进程停止或终止. WUNTRACED - 解释见参考手册 */
-		if (waitpid(pid, &status, WUNTRACED) < 0) { return -6; }
+		if (waitpid(pid, &status,  WUNTRACED) < 0 && errno != EACCES) { return -6; }
 
 		int ret = -1002;
 		read(fd[0], (void*)&ret, sizeof(ret));
@@ -241,7 +241,7 @@ static int safe_wait_and_find_cmdline_process(unsigned int root_key, const char*
 
 		int status;
 		/* 等待目标进程停止或终止. WUNTRACED - 解释见参考手册 */
-		if (waitpid(pid, &status, WUNTRACED) < 0) { return -6; }
+		if (waitpid(pid, &status,  WUNTRACED) < 0 && errno != EACCES) { return -6; }
 
 		int ret = -1002;
 		read(fd[0], (void*)&ret, sizeof(ret));

@@ -89,7 +89,6 @@
   <ItemGroup>
     <ClInclude Include="adb64_helper.h" />
     <ClInclude Include="base64.h" />
-    <ClInclude Include="fork_helper.h" />
     <ClInclude Include="process64_inject.h" />
     <ClInclude Include="maps_helper.h" />
     <ClInclude Include="ptrace_arm64_utils.h" />

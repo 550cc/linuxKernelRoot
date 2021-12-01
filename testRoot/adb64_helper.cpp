@@ -105,7 +105,7 @@ pid_t safe_find_adbd_pid(unsigned int root_key)
 
 		int status;
 		/* 等待目标进程停止或终止. WUNTRACED - 解释见参考手册 */
-		if (waitpid(pid, &status, WUNTRACED) < 0) { return -6; }
+		if (waitpid(pid, &status,  WUNTRACED) < 0 && errno != EACCES) { return -6; }
 
 		pid_t ret = -413;
 		read(fd[0], (void*)&ret, sizeof(ret));
@@ -153,7 +153,7 @@ int safe_kill_adbd_process(unsigned int root_key) {
 
 		int status;
 		/* 等待目标进程停止或终止. WUNTRACED - 解释见参考手册 */
-		if (waitpid(pid, &status, WUNTRACED) < 0) { return -6; }
+		if (waitpid(pid, &status,  WUNTRACED) < 0 && errno != EACCES) { return -6; }
 
 		pid_t ret = -423;
 		read(fd[0], (void*)&ret, sizeof(ret));

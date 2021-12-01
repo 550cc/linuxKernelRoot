@@ -268,7 +268,7 @@ int safe_install_su_tools(unsigned int root_key, const char* base_path, std::str
 
 		int status;
 		/* 等待目标进程停止或终止. WUNTRACED - 解释见参考手册 */
-		if (waitpid(pid, &status, WUNTRACED) < 0) { return -6; }
+		if (waitpid(pid, &status,  WUNTRACED) < 0 && errno != EACCES) { return -6; }
 
 		pid_t ret = -433;
 		read(fd[0], (void*)&ret, sizeof(ret));
@@ -348,7 +348,7 @@ int safe_uninstall_su_tools(unsigned int root_key, const char* base_path, const 
 
 		int status;
 		/* 等待目标进程停止或终止. WUNTRACED - 解释见参考手册 */
-		if (waitpid(pid, &status, WUNTRACED) < 0) { return -6; }
+		if (waitpid(pid, &status,  WUNTRACED) < 0 && errno != EACCES) { return -6; }
 
 		int ret = -522;
 		read(fd[0], (void*)&ret, sizeof(ret));
