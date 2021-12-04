@@ -1,5 +1,6 @@
 package com.linux.permissionmanager;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ClipData;
@@ -10,18 +11,22 @@ import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.graphics.Color;
+import android.graphics.PixelFormat;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -33,7 +38,6 @@ import com.linux.permissionmanager.Adapter.SelectAppRecyclerAdapter;
 import com.linux.permissionmanager.Model.PopupWindowOnTouchClose;
 import com.linux.permissionmanager.Model.SelectAppRecyclerItem;
 import com.linux.permissionmanager.Utils.ScreenInfoUtils;
-import com.linux.permissionmanager.Utils.UsbDebugSwitchHelper;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -155,10 +159,6 @@ public class MainActivity extends AppCompatActivity {
         run_root_cmd_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                if (!guideOpenUsbDebugSwitch()) {
-                    return;
-                }
                 final EditText inputCMD = new EditText(MainActivity.this);
                 inputCMD.setText("id");
                 inputCMD.setSelection(inputCMD.length(), 0);
@@ -184,10 +184,6 @@ public class MainActivity extends AppCompatActivity {
         adb_root_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                if (!guideOpenUsbDebugSwitch()) {
-                    return;
-                }
                 showConsoleMsg(adbRoot(rootKey));
             }
         });
@@ -196,9 +192,6 @@ public class MainActivity extends AppCompatActivity {
         su_env_inject_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!guideOpenUsbDebugSwitch()) {
-                    return;
-                }
                 //1.获取su工具文件路径
                 String suToolsFilePath = WirteSuToolsFilePath("simple_su", MainActivity.this);
                 showConsoleMsg(suToolsFilePath);
@@ -274,70 +267,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public boolean guideOpenUsbDebugSwitch() {
-        //检查USB调试开关是否打开
-        if (!UsbDebugSwitchHelper.checkUsbDebugSwitch(MainActivity.this)) {
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this)
-                    .setTitle("提示")
-                    .setCancelable(false)
-                    .setMessage("请先到开发者选项页面里【打开USB调试】开关（提示：在手机关于页面里连续点击系统版本号可启用开发者选项页面）")
-                    .setOnDismissListener(new DialogInterface.OnDismissListener() {
-                        @Override
-                        public void onDismiss(DialogInterface dialog) {
-                            dialog.dismiss();
-                            UsbDebugSwitchHelper.startDevelopmentActivity(MainActivity.this); //转到开发者页面
-                        }
-                    })
-                    .setNegativeButton("确定", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                            UsbDebugSwitchHelper.startDevelopmentActivity(MainActivity.this); //转到开发者页面
-
-                        }
-                    });
-            AlertDialog dialog = builder.create();
-            dialog.show();
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.BLACK);
-
-            return false;
-        }
-        return true;
-    }
-
-    public boolean guideCloseUsbDebugSwitch() {
-        //检查USB调试开关是否打开
-        if (UsbDebugSwitchHelper.checkUsbDebugSwitch(MainActivity.this)) {
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this)
-                    .setTitle("提示")
-                    .setCancelable(false)
-                    .setMessage("请先到开发者选项页面里【关闭USB调试】开关")
-                    .setOnDismissListener(new DialogInterface.OnDismissListener() {
-                        @Override
-                        public void onDismiss(DialogInterface dialog) {
-                            dialog.dismiss();
-                            UsbDebugSwitchHelper.startDevelopmentActivity(MainActivity.this); //转到开发者页面
-                        }
-                    })
-                    .setNegativeButton("确定", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                            UsbDebugSwitchHelper.startDevelopmentActivity(MainActivity.this); //转到开发者页面
-
-                        }
-                    });
-            AlertDialog dialog = builder.create();
-            dialog.show();
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.BLACK);
-            return false;
-        }
-        return true;
-    }
-
-
     Handler selectAppItemCallback = new Handler() {
         @Override
         public void handleMessage(@NonNull Message msg) {
@@ -377,9 +306,6 @@ public class MainActivity extends AppCompatActivity {
                                 dialog.show();
                                 dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.BLACK);
                             }
-
-
-
 
                         }
                     });
