@@ -11,6 +11,7 @@
 #include "../../../../../testRoot/kernel_root_helper.h"
 #include "../../../../../testRoot/process64_inject.h"
 #include "../../../../../testRoot/adb64_helper.h"
+#include "../../../../../testRoot/init64_helper.h"
 #include "../../../../../testRoot/su_install_helper.h"
 
 using namespace std;
@@ -121,8 +122,8 @@ Java_com_linux_permissionmanager_MainActivity_runRootCmd(
 
     stringstream sstr;
     char szResult[0x1000] = {0};
-    ssize_t  inject = safe_inject_adbd64_run_cmd_wrapper(rootKey, strCmd.c_str(), szResult, sizeof(szResult));
-    //ssize_t  inject = safe_inject_adbd64_run_cmd_wrapper(rootKey, strCmd.c_str(),NULL, 0);
+    ssize_t  inject = safe_inject_init64_run_cmd_wrapper(rootKey, strCmd.c_str(), szResult, sizeof(szResult));
+    //ssize_t  inject = safe_inject_init64_run_cmd_wrapper(rootKey, strCmd.c_str(),NULL, 0);
     sstr << "runRootCmd ret val:" << inject << ", result:" << szResult;
     return env->NewStringUTF(sstr.str().c_str());
 }
