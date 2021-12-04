@@ -4,6 +4,7 @@
 #include <sys/capability.h>
 #include "process64_inject.h"
 #include "adb64_helper.h"
+#include "init64_helper.h"
 #include "su_install_helper.h"
 #define ROOT_KEY 0x7F6766F8
 
@@ -97,7 +98,7 @@ void test_run_normal_cmd(const char * shell) {
 void test_run_root_cmd(const char * cmd) {
 	printf("test_run_root_cmd(%s)\n", cmd);
 	char result[0x1000] = { 0 };
-	ssize_t ret = inject_adbd64_run_cmd_wrapper(ROOT_KEY, cmd, result, sizeof(result));
+	ssize_t ret = inject_init64_run_cmd_wrapper(ROOT_KEY, cmd, result, sizeof(result));
 	printf("test_run_root_cmd ret val:%zd\n", ret);
 	printf("test_run_root_cmd result:%s\n", result);
 }
@@ -117,7 +118,7 @@ void test_su_env_inject(const char* target_pid_cmdline)
 
 	//1.安装su工具套件
 	std::string su_hidden_path;
-	int install_su_tools_ret = install_su_tools(ROOT_KEY, myself_path, su_hidden_path, "su");
+	int install_su_tools_ret = install_su_tools(ROOT_KEY, myself_path, su_hidden_path, "adb_su");
 	printf("install_su_tools ret val:%d\n", install_su_tools_ret);
 	if (install_su_tools_ret != 0) {
 		return;
@@ -126,17 +127,11 @@ void test_su_env_inject(const char* target_pid_cmdline)
 	//2.杀光所有历史进程
 	std::vector<pid_t> vOut;
 	int find_all_cmdline_process_ret = find_all_cmdline_process(ROOT_KEY, target_pid_cmdline, vOut);
-	printf("find_all_cmdline_process ret val:%d, cnt:%d\n", find_all_cmdline_process_ret, vOut.size());
+	printf("find_all_cmdline_process ret val:%d, cnt:%zu\n", find_all_cmdline_process_ret, vOut.size());
 	if (find_all_cmdline_process_ret != 0) {
 		return;
 	}
-	std::string kill_cmd;
-	for (pid_t t : vOut) {
-		kill_cmd += "kill -9 ";
-		kill_cmd += std::to_string(t);
-		kill_cmd += ";";
-	}
-	int kill_ret = run_normal_cmd(ROOT_KEY, kill_cmd.c_str());
+	int kill_ret = kill_process_ex(ROOT_KEY, vOut);
 	printf("kill_ret ret val:%d\n", kill_ret);
 	if (kill_ret != 0) {
 		return;
