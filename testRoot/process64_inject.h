@@ -1,18 +1,17 @@
-#ifndef _PROCESS64_INJECT_H_
+ï»¿#ifndef _PROCESS64_INJECT_H_
 #define _PROCESS64_INJECT_H_
 #include "testRoot.h"
 #include <unistd.h>
 #include <vector>
 
 
-//×¢Èë64Î»½ø³ÌÔ¶³ÌÖ´ĞĞÃüÁî£¬±¸×¢£º´ËÃüÁî»á×Ô¶¯ÌáÈ¨µ½ROOT¡¢²¢ÇÒ¹Ø±ÕSELinux¡£½áÊøÔËĞĞºó¿É¸ù¾İ×Ô¼ºµÄĞèÒª¾ö¶¨ÊÇ·ñÊÖ¶¯ÖØĞÂ´ò¿ªSELinux
-struct process64_env 
-{
-	char key[0x1000]; //keyºÍnameµÄÖµ²»ÄÜ´óÓÚpagesize
+//æ³¨å…¥64ä½è¿›ç¨‹è¿œç¨‹æ‰§è¡Œå‘½ä»¤ï¼Œå¤‡æ³¨ï¼šæ­¤å‘½ä»¤ä¼šè‡ªåŠ¨ææƒåˆ°ROOTã€å¹¶ä¸”å…³é—­SELinuxã€‚ç»“æŸè¿è¡Œåå¯æ ¹æ®è‡ªå·±çš„éœ€è¦å†³å®šæ˜¯å¦æ‰‹åŠ¨é‡æ–°æ‰“å¼€SELinux
+struct process64_env {
+	char key[0x1000]; //keyå’Œnameçš„å€¼ä¸èƒ½å¤§äºpagesize
 	char value[0x1000];
 };
 ssize_t inject_process64_run_cmd_wrapper(
-	unsigned int root_key,
+	const char* str_root_key,
 	pid_t target_pid,
 	const char *cmd,
 	const char* p_out_result_buf = NULL,
@@ -23,9 +22,9 @@ ssize_t inject_process64_run_cmd_wrapper(
 	const char * chdir_path = NULL,
 	bool clear_env = false,
 	std::vector<process64_env> *set_env = NULL);
-//fork°²È«°æ±¾£¨¿ÉÓÃÓÚ°²×¿APPÖ±½Óµ÷ÓÃ£©
+//forkå®‰å…¨ç‰ˆæœ¬ï¼ˆå¯ç”¨äºå®‰å“APPç›´æ¥è°ƒç”¨ï¼‰
 ssize_t safe_inject_process64_run_cmd_wrapper(
-	unsigned int root_key,
+	const char* str_root_key,
 	pid_t target_pid,
 	const char *cmd,
 	const char* p_out_result_buf = NULL,
@@ -37,13 +36,20 @@ ssize_t safe_inject_process64_run_cmd_wrapper(
 	bool clear_env = false,
 	std::vector<process64_env> *set_env = NULL);
 
-//×¢ÈëÔ¶³Ì½ø³ÌÌí¼ÓPATH±äÁ¿Â·¾¶£¬±¸×¢£º´ËÃüÁî»á×Ô¶¯ÌáÈ¨µ½ROOT¡¢²¢ÇÒ¹Ø±ÕSELinux¡£½áÊøÔËĞĞºó¿É¸ù¾İ×Ô¼ºµÄĞèÒª¾ö¶¨ÊÇ·ñÊÖ¶¯ÖØĞÂ´ò¿ªSELinux
-ssize_t inject_process_env64_PATH_wrapper(unsigned int root_key, int target_pid, const char *add_path);
-//fork°²È«°æ±¾£¨¿ÉÓÃÓÚ°²×¿APPÖ±½Óµ÷ÓÃ£©
-ssize_t safe_inject_process_env64_PATH_wrapper(unsigned int root_key, int target_pid, const char *add_path);
+//æ³¨å…¥è¿œç¨‹è¿›ç¨‹æ·»åŠ PATHå˜é‡è·¯å¾„ï¼Œå¤‡æ³¨ï¼šæ­¤å‘½ä»¤ä¼šè‡ªåŠ¨ææƒåˆ°ROOTã€å¹¶ä¸”å…³é—­SELinuxã€‚ç»“æŸè¿è¡Œåå¯æ ¹æ®è‡ªå·±çš„éœ€è¦å†³å®šæ˜¯å¦æ‰‹åŠ¨é‡æ–°æ‰“å¼€SELinux
+ssize_t inject_process_env64_PATH_wrapper(const char* str_root_key, int target_pid, const char *add_path);
+//forkå®‰å…¨ç‰ˆæœ¬ï¼ˆå¯ç”¨äºå®‰å“APPç›´æ¥è°ƒç”¨ï¼‰
+ssize_t safe_inject_process_env64_PATH_wrapper(const char* str_root_key, int target_pid, const char *add_path);
 
-//×¢Èë64Î»½ø³Ì¶¯Ì¬Á´½Ó¿âso£¬±¸×¢£º´ËÃüÁî»á×Ô¶¯ÌáÈ¨µ½ROOT¡¢²¢ÇÒ¹Ø±ÕSELinux¡£½áÊøÔËĞĞºó¿É¸ù¾İ×Ô¼ºµÄĞèÒª¾ö¶¨ÊÇ·ñÊÖ¶¯ÖØĞÂ´ò¿ªSELinux
-ssize_t inject_process64_so_wrapper(unsigned int root_key, pid_t target_pid, const char *p_target_so_path, const char* p_target_so_func_name);
-//fork°²È«°æ±¾£¨¿ÉÓÃÓÚ°²×¿APPÖ±½Óµ÷ÓÃ£©
-ssize_t safe_inject_process64_so_wrapper(unsigned int root_key, pid_t target_pid, const char *p_target_so_path, const char* p_target_so_func_name);
+//æ³¨å…¥64ä½è¿›ç¨‹åŠ¨æ€é“¾æ¥åº“soï¼Œå¤‡æ³¨ï¼šæ­¤å‘½ä»¤ä¼šè‡ªåŠ¨ææƒåˆ°ROOTã€å¹¶ä¸”å…³é—­SELinuxã€‚ç»“æŸè¿è¡Œåå¯æ ¹æ®è‡ªå·±çš„éœ€è¦å†³å®šæ˜¯å¦æ‰‹åŠ¨é‡æ–°æ‰“å¼€SELinux
+ssize_t inject_process64_so_wrapper(const char* str_root_key, pid_t target_pid, const char *p_target_so_path, const char* p_target_so_func_name);
+//forkå®‰å…¨ç‰ˆæœ¬ï¼ˆå¯ç”¨äºå®‰å“APPç›´æ¥è°ƒç”¨ï¼‰
+ssize_t safe_inject_process64_so_wrapper(const char* str_root_key, pid_t target_pid, const char *p_target_so_path, const char* p_target_so_func_name);
+
+
+int kill_process(const char* str_root_key, pid_t pid = true);
+int safe_kill_process(const char* str_root_key, pid_t pid = true);
+
+int kill_process_ex(const char* str_root_key, const std::vector<pid_t> & vpid);
+int safe_kill_process_ex(const char* str_root_key, const std::vector<pid_t> & vpid);
 #endif /* _PROCESS64_INJECT_H_ */

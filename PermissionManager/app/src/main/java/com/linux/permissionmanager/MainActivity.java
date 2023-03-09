@@ -47,16 +47,16 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private long rootKey = 0x7F6766F8;
+    private String rootKey = "u24kKoPVSAG1tnwlcs1PJ1qp6HtVymj60CoTgsjmMd1UALve";
     private String suBasePath = "/data/local/tmp";
 
     //保存的本地配置信息
     private SharedPreferences m_shareSave;
     private ProgressDialog m_loadingDlg = null;
 
-    // Used to load the 'native-lib' library on application startup.
+    // Used to load the 'permissionmanager' library on application startup.
     static {
-        System.loadLibrary("root");
+        System.loadLibrary("permissionmanager");
     }
 
     @Override
@@ -67,23 +67,23 @@ public class MainActivity extends AppCompatActivity {
 
         m_shareSave = getSharedPreferences("zhcs", Context.MODE_PRIVATE);
         try {
-            rootKey = m_shareSave.getLong("rootKey", rootKey);
+            rootKey = m_shareSave.getString("rootKey", rootKey);
         } catch (Exception e) {
         }
 
         //验证用户的KEY
         final EditText inputKey = new EditText(MainActivity.this);
-        inputKey.setText(Long.toHexString(rootKey));
+        inputKey.setText(rootKey);
         inputKey.setSelection(inputKey.length(), 0);
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setCancelable(false);
         builder.setTitle("请输入ROOT权限的KEY").setIcon(android.R.drawable.ic_dialog_info).setView(inputKey)
                 .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        rootKey = Long.valueOf(inputKey.getText().toString(), 16);
+                        rootKey = inputKey.getText().toString();
                         //数值保存到本地
                         SharedPreferences.Editor mEdit = m_shareSave.edit();
-                        mEdit.putLong("rootKey", rootKey);
+                        mEdit.putString("rootKey", rootKey);
                         mEdit.commit();
                     }
 
@@ -127,41 +127,16 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Button run_normal_cmd_btn = findViewById(R.id.run_normal_cmd_btn);
-        run_normal_cmd_btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                final EditText inputCMD = new EditText(MainActivity.this);
-                inputCMD.setText("id");
-                inputCMD.setSelection(inputCMD.length(), 0);
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                builder.setTitle("输入普通命令").setIcon(android.R.drawable.ic_dialog_info).setView(inputCMD)
-                        .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        });
-                builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        String text = inputCMD.getText().toString();
-                        showConsoleMsg(text + "\n" + runNormalCmd(rootKey, text));
-                    }
-
-                    ;
-                });
-                builder.show();
-
-            }
-        });
         Button run_root_cmd_btn = findViewById(R.id.run_root_cmd_btn);
         run_root_cmd_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                String defaultCmd = "id";
                 final EditText inputCMD = new EditText(MainActivity.this);
-                inputCMD.setText("id");
-                inputCMD.setSelection(inputCMD.length(), 0);
+                inputCMD.setText(defaultCmd);
+                inputCMD.setSelection(defaultCmd.length(), 0);
+                inputCMD.setFocusable(true);
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                 builder.setTitle("输入ROOT命令").setIcon(android.R.drawable.ic_dialog_info).setView(inputCMD)
                         .setNegativeButton("取消", new DialogInterface.OnClickListener() {
@@ -180,6 +155,33 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+        Button run_init_process_cmd_btn = findViewById(R.id.run_init_process_cmd_btn);
+        run_init_process_cmd_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String defaultCmd = "id";
+                final EditText inputCMD = new EditText(MainActivity.this);
+                inputCMD.setText(defaultCmd);
+                inputCMD.setSelection(defaultCmd.length(), 0);
+                inputCMD.setFocusable(true);
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle("输入ROOT命令").setIcon(android.R.drawable.ic_dialog_info).setView(inputCMD)
+                        .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        String text = inputCMD.getText().toString();
+                        showConsoleMsg(text + "\n" + runInit64ProcessCmd(rootKey, text));
+                    }
+                });
+                builder.show();
+
+            }
+        });
         Button adb_root_btn = findViewById(R.id.adb_root_btn);
         adb_root_btn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -188,25 +190,34 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        Button su_env_install_btn = findViewById(R.id.su_env_install_btn);
+        su_env_install_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //1.获取su工具文件路径
+                String suFilePath = WirteSuToolsFilePath("su", MainActivity.this);
+                showConsoleMsg(suFilePath);
+
+                //2.安装su工具
+                String insRet = installSu(rootKey, suBasePath, suFilePath);
+                showConsoleMsg(insRet);
+                if(insRet.indexOf("installSu done.") == -1) {
+                    return;
+                }
+
+                //3.复制su的路径到剪贴板
+                String suFullPath = getLastInstallSuFullPath();
+                copyEditText(suFullPath);
+                Toast.makeText(v.getContext(), "su路径已复制到剪贴板", Toast.LENGTH_SHORT).show();
+
+            }
+        });
+
         Button su_env_inject_btn = findViewById(R.id.su_env_inject_btn);
         su_env_inject_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //1.获取su工具文件路径
-                String suToolsFilePath = WirteSuToolsFilePath("simple_su", MainActivity.this);
-                showConsoleMsg(suToolsFilePath);
-
-                //2.安装su工具
-                String suFolderHeadFlag = "su_ver1";
-                String insRet = installSuTools(rootKey, suBasePath, suToolsFilePath, suFolderHeadFlag);
-                showConsoleMsg(insRet);
-                if(insRet.indexOf("installSuTools done.") == -1) {
-                    return;
-                }
-
-                //3.选择APP进程
-                showSelectAppWindow(suFolderHeadFlag);
-
+                showSelectAppWindow();
             }
         });
 
@@ -215,8 +226,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //让adbd自我重启
-                showConsoleMsg(killAdbdProcess(rootKey));
-                showConsoleMsg(uninstallSuTools(rootKey,suBasePath, "su"));
+                showConsoleMsg(uninstallSu(rootKey,suBasePath));
             }
         });
 
@@ -224,7 +234,8 @@ public class MainActivity extends AppCompatActivity {
         copy_info_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                copyConsoleMsg();
+                EditText edit = findViewById(R.id.console_edit);
+                copyEditText(edit.getText().toString());
                 Toast.makeText(v.getContext(), "复制成功", Toast.LENGTH_SHORT).show();
 
             }
@@ -256,12 +267,11 @@ public class MainActivity extends AppCompatActivity {
         console_edit.setText("");
     }
 
-    public void copyConsoleMsg() {
-        EditText console_edit = findViewById(R.id.console_edit);
+    public void copyEditText(String text) {
         //获取剪贴板管理器：
         ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         // 创建普通字符型ClipData
-        ClipData mClipData = ClipData.newPlainText("Label", console_edit.getText());
+        ClipData mClipData = ClipData.newPlainText("Label", text);
         // 将ClipData内容放到系统剪贴板里。
         cm.setPrimaryClip(mClipData);
 
@@ -283,7 +293,7 @@ public class MainActivity extends AppCompatActivity {
 
             new Thread() {
                 public void run() {
-                    String ret = autoSuEnvInject(rootKey, appItem.getPackageName(), suBasePath, appItem.getSuFolderHeadFlag());
+                    String ret = autoSuEnvInject(rootKey, appItem.getPackageName(), suBasePath);
                     runOnUiThread(new Runnable() {
                         public void run() {
                             showConsoleMsg(ret);
@@ -316,7 +326,7 @@ public class MainActivity extends AppCompatActivity {
     };
 
     //显示选择应用程序窗口
-    public void showSelectAppWindow(String suFolderHeadFlag) {
+    public void showSelectAppWindow() {
         final PopupWindow popupWindow = new PopupWindow(this);
 
         View view = View.inflate(this, R.layout.select_app_wnd, null);
@@ -384,8 +394,7 @@ public class MainActivity extends AppCompatActivity {
             appList.add(new SelectAppRecyclerItem(
                     icon,
                     showName,
-                    packageName,
-                    suFolderHeadFlag));
+                    packageName));
         }
         for (int i = 0; i < packages.size(); i++) {
             PackageInfo packageInfo = packages.get(i);
@@ -405,8 +414,7 @@ public class MainActivity extends AppCompatActivity {
             appList.add(new SelectAppRecyclerItem(
                     icon,
                     showName,
-                    packageName,
-                    suFolderHeadFlag));
+                    packageName));
         }
 
         SelectAppRecyclerAdapter adapter = new SelectAppRecyclerAdapter(
@@ -449,23 +457,23 @@ public class MainActivity extends AppCompatActivity {
 
     public native String getCapabilityInfo();
 
-    public native int getRoot(long rootKey);
+    public native int getRoot(String rootKey);
 
-    public native int disableSElinux(long rootKey);
+    public native String runRootCmd(String rootKey, String cmd);
 
-    public native int enableSElinux(long rootKey);
+    public native String runInit64ProcessCmd(String rootKey, String cmd);
 
-    public native String runNormalCmd(long rootKey, String cmd);
+    public native int disableSElinux(String rootKey);
 
-    public native String runRootCmd(long rootKey, String cmd);
+    public native int enableSElinux(String rootKey);
 
-    public native String adbRoot(long rootKey);
+    public native String adbRoot(String rootKey);
 
-    public native String installSuTools(long rootKey, String basePath, String suToolsFilePath, String suToolsFileFolderHeadFlags);
+    public native String installSu(String rootKey, String basePath, String suFilePath);
 
-    public native String uninstallSuTools(long rootKey, String basePath, String suToolsFileFolderHeadFlags);
+    public native String getLastInstallSuFullPath();
 
-    public native String killAdbdProcess(long rootKey);
+    public native String uninstallSu(String rootKey, String basePath);
 
-    public native String autoSuEnvInject(long rootKey, String targetProcessCmdline, String basePath, String suToolsFileFolderHeadFlags);
+    public native String autoSuEnvInject(String rootKey, String targetProcessCmdline, String basePath);
 }

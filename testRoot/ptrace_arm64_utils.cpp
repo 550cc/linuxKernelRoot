@@ -13,6 +13,8 @@
 #include <sys/uio.h>
 #include <cinttypes>
 
+#include "testRoot.h"
+
 int ptrace_readdata(pid_t pid, uint8_t *src, uint8_t *buf, size_t size)
 {
 	long i, j, remain;
@@ -225,17 +227,12 @@ int ptrace_call(pid_t pid, uintptr_t addr, unsigned long *params, int num_params
 	}
 
 /*
-
 WUNTRACED告诉waitpid，如果子进程进入暂停状态，那么就立即返回。如果是被ptrace的子进程，那么即使不提供WUNTRACED参数，也会在子进程进入暂停状态的时候立即返回。对于使用PTRACE_CONT运行的子进程，它会在3种情况下进入暂停状态：①下一次系统调用；②子进程退出；③子进程的执行发生错误。这里的0xb7f就表示子进程进入了暂停状态，且发送的错误信号为11(SIGSEGV)，它表示试图访问未分配给自己的内存, 或试图往没有写权限的内存地址写数据。那么什么时候会发生这种错误呢？显然，当子进程执行完注入的函数后，由于我们在前面设置了regs->ARM_lr = 0，它就会返回到0地址处继续执行，这样就会产生SIGSEGV。
 这里还需要了解下arm架构的相关知识。首先是函数参数传递，在arm中，函数的前4个参数分别保存在r0-r3中，当参数大于4个，就依次压入栈中。此外，arm处理器实际上支持两套指令集，即arm和thumb。thumb为16位，arm为32位。这里通过判断pc的最后一位是否是1来确定指令集，这是因为编译器在用thmub指令集编译一个函数时，会将函数的符号地址设置成真正的映射地址+1，实现arm和thumb混编。此外，在切换arm和thumb指令时，还会修改CPSR处理器。在arm中，出了r0-r15这16个处理器，还有状态寄存器CPSR。关于CPSR的其他位这里先不讨论，我们只要知道CPSR寄存器的第低5位T标识了当前的指令集(T=0表示执行arm指令，T=1表示执行Thumb指令)，所以在切换指令集时需要修改这一位。
-
 
 Arm与Thumb之间的状态切换是通过专用的转移交换指令BX来实现。BX指令以通用寄存器（R0~R15）为操作数，通过拷贝Rn到PC实现绝对跳转。BX利用Rn寄存器中目的地址值的最后一位判断跳转后的状态，如果为“1”表示跳转到Thumb指令集的函数中，如果为“0”表示跳转到Arm指令集的函数中。而Arm指令集的每条指令是32位，即4个字节，也就是说Arm指令的地址肯定是4的倍数，最后两位必定为“00”。所以，直接就可以将从符号表中获得的调用地址模4，看是否为0来判断要修改的函数是用Arm指令集还是Thumb指令集。
 
 	*/
-
-
-
 	//	waitpid(pid, NULL, WUNTRACED);	
 
 	int status = 0;

@@ -1,7 +1,5 @@
 ﻿#ifndef PTRACE_ARM64_UTILS_H_
 #define PTRACE_ARM64_UTILS_H_
-#include "testRoot.h"
-
 #include <unistd.h>
 
 #ifndef __aarch64__

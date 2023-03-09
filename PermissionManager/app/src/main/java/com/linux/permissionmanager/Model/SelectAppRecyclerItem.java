@@ -6,13 +6,11 @@ public class SelectAppRecyclerItem {
     private Drawable icon=null;
     private String showName;
     private String packageName;
-    private String suFolderHeadFlag;
 
-    public SelectAppRecyclerItem(Drawable icon, String showName, String packageName, String suFolderHeadFlag){
+    public SelectAppRecyclerItem(Drawable icon, String showName, String packageName){
         this.icon=icon;
         this.showName = showName;
         this.packageName = packageName;
-        this.suFolderHeadFlag = suFolderHeadFlag;
     }
 
     public Drawable getIcon() {
@@ -33,14 +31,6 @@ public class SelectAppRecyclerItem {
 
     public String getPackageName() {
         return packageName;
-    }
-
-    public void setSuFolderHeadFlag(String suFolderHeadFlag) {
-        this.showName = showName;
-    }
-
-    public String getSuFolderHeadFlag() {
-        return suFolderHeadFlag;
     }
 
     public void setPackageName(String packageName) {

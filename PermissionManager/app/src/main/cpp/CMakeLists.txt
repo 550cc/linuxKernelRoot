@@ -3,7 +3,7 @@
 
 # Sets the minimum version of CMake required to build the native library.
 
-cmake_minimum_required(VERSION 3.10.2)
+cmake_minimum_required(VERSION 3.18.1)
 
 # Declares and names the project.
 
@@ -15,12 +15,12 @@ project("permissionmanager")
 # Gradle automatically packages shared libraries with your APK.
 
 add_library( # Sets the name of the library.
-             root
+        permissionmanager
 
-             # Sets the library as a shared library.
-             SHARED
+        # Sets the library as a shared library.
+        SHARED
 
-             # Provides a relative path to your source file(s).
+        # Provides a relative path to your source file(s).
         ../../../../../testRoot/process64_inject.cpp
         ../../../../../testRoot/adb64_helper.cpp
         ../../../../../testRoot/ptrace_arm64_utils.cpp
@@ -35,19 +35,19 @@ add_library( # Sets the name of the library.
 # completing its build.
 
 find_library( # Sets the name of the path variable.
-              log-lib
+        log-lib
 
-              # Specifies the name of the NDK library that
-              # you want CMake to locate.
-              log )
+        # Specifies the name of the NDK library that
+        # you want CMake to locate.
+        log)
 
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
 # build script, prebuilt third-party libraries, or system libraries.
 
 target_link_libraries( # Specifies the target library.
-                        root
+        permissionmanager
 
-                       # Links the target library to the log library
-                       # included in the NDK.
-                       ${log-lib} )
+        # Links the target library to the log library
+        # included in the NDK.
+        ${log-lib})

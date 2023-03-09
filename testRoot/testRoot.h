@@ -7,6 +7,7 @@
 #include <string.h>
 #include <vector>
 #include "kernel_root_helper.h"
+#include "kernel_root_key.h"
 
 //安静输出模式
 #define QUIET_PRINTF
@@ -25,25 +26,7 @@
 #endif
 #endif
 
-
-static size_t get_executable_path(char* processdir, char* processname, size_t len)
-{
-	char* path_end;
-	if (readlink("/proc/self/exe", processdir, len) <= 0)
-	{
-		return -1;
-	}
-	path_end = strrchr(processdir, '/');
-	if (path_end == NULL)
-	{
-		return -1;
-	}
-	++path_end;
-	strcpy(processname, path_end);
-	*path_end = '\0';
-	return (size_t)(path_end - processdir);
-}
-static int find_all_cmdline_process(unsigned int root_key, const char* target_cmdline, std::vector<pid_t> & vOut)
+static int find_all_cmdline_process(const char* str_root_key, const char* target_cmdline, std::vector<pid_t> & vOut)
 {
 	int id;
 	DIR* dir;
@@ -52,21 +35,15 @@ static int find_all_cmdline_process(unsigned int root_key, const char* target_cm
 	char cmdline[256];
 
 	struct dirent * entry;
-
-	if (get_root(root_key) != 0) {
+	vOut.clear();
+	if (kernel_root::get_root(str_root_key) != 0) {
 		return -1;
 	}
 
-	if (!is_disable_selinux_status()) {  //要关掉SELinux才能找到进程PID
-		if (disable_selinux(root_key) != 0) {
-			return -2;
-		}
-	}
-
 	dir = opendir("/proc");
-	if (dir == NULL)
+	if (dir == NULL) {
 		return -3;
-
+	}
 	while ((entry = readdir(dir)) != NULL) {
 		// 如果读取到的是"."或者".."则跳过，读取到的不是文件夹名字也跳过
 		if ((strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0)) {
@@ -99,22 +76,21 @@ static int find_all_cmdline_process(unsigned int root_key, const char* target_cm
 	return 0;
 }
 
-static int safe_find_all_cmdline_process(unsigned int root_key, const char* target_cmdline, std::vector<pid_t> & vOut)
+static int safe_find_all_cmdline_process(const char* str_root_key, const char* target_cmdline, std::vector<pid_t> & vOut)
 {
 	int fd[2];
 	if (pipe(fd)) {
-		return -1000;
+		return -1001;
 	}
 
 	pid_t pid;
 	if ((pid = fork()) < 0) {
 		//fork error
-		return -1001;
-
+		return -1002;
 	}
-	else if (pid == 0) { /* 子进程 */
+	else if (pid == 0) { // child process
 		close(fd[0]); //close read pipe
-		int ret = find_all_cmdline_process(root_key, target_cmdline, vOut);
+		int ret = find_all_cmdline_process(str_root_key, target_cmdline, vOut);
 		write(fd[1], &ret, sizeof(ret));
 		size_t cnt = vOut.size();
 		write(fd[1], &cnt, sizeof(cnt));
@@ -122,17 +98,16 @@ static int safe_find_all_cmdline_process(unsigned int root_key, const char* targ
 			write(fd[1], &t, sizeof(t));
 		}
 		close(fd[1]); //close write pipe
-		force_kill_myself();
+		_exit(0);
 	}
-	else { /*父进程*/
+	else { // father process
 
 		close(fd[1]); //close write pipe
-
 		int status;
-		/* 等待目标进程停止或终止. WUNTRACED - 解释见参考手册 */
-		if (waitpid(pid, &status,  WUNTRACED) < 0 && errno != EACCES) { return -6; }
-
-		int ret = -1002;
+		if (waitpid(pid, &status, WUNTRACED) < 0 && errno != EACCES) {
+			return -1003;	
+		}
+		int ret = -1004;
 		read(fd[0], (void*)&ret, sizeof(ret));
 		size_t cnt = 0;
 		read(fd[0], (void*)&cnt, sizeof(cnt));
@@ -141,15 +116,14 @@ static int safe_find_all_cmdline_process(unsigned int root_key, const char* targ
 			read(fd[0], (void*)&t, sizeof(t));
 			vOut.push_back(t);
 		}
-
 		close(fd[0]); //close read pipe
 		return ret;
 	}
-	return -1003;
+	return -1005;
 }
 
 
-static int wait_and_find_cmdline_process(unsigned int root_key, const char* target_cmdline)
+static int wait_and_find_cmdline_process(const char* str_root_key, const char* target_cmdline)
 {
 	int id;
 	pid_t pid = -1;
@@ -160,22 +134,17 @@ static int wait_and_find_cmdline_process(unsigned int root_key, const char* targ
 
 	struct dirent * entry;
 
-	if (get_root(root_key) != 0) {
+	if (kernel_root::get_root(str_root_key) != 0) {
 		return -1;
-	}
-
-	if (!is_disable_selinux_status()) {  //要关掉SELinux才能找到进程PID
-		if (disable_selinux(root_key) != 0) {
-			return -2;
-		}
 	}
 
 	while (1) {
 		sleep(0);
 
 		dir = opendir("/proc");
-		if (dir == NULL)
+		if (dir == NULL) {
 			return -3;
+		}
 
 		while ((entry = readdir(dir)) != NULL) {
 			// 如果读取到的是"."或者".."则跳过，读取到的不是文件夹名字也跳过
@@ -215,41 +184,42 @@ static int wait_and_find_cmdline_process(unsigned int root_key, const char* targ
 	return pid;
 }
 
-static int safe_wait_and_find_cmdline_process(unsigned int root_key, const char* target_cmdline)
+static int safe_wait_and_find_cmdline_process(const char* str_root_key, const char* target_cmdline)
 {
 	int fd[2];
 	if (pipe(fd)) {
-		return -1000;
+		return -1001;
 	}
 
 	pid_t pid;
 	if ((pid = fork()) < 0) {
 		//fork error
-		return -1001;
+		return -1002;
 
 	}
-	else if (pid == 0) { /* 子进程 */
+	else if (pid == 0) { // child process
 		close(fd[0]); //close read pipe
-		int ret = wait_and_find_cmdline_process(root_key, target_cmdline);
+		int ret = wait_and_find_cmdline_process(str_root_key, target_cmdline);
 		write(fd[1], &ret, sizeof(ret));
 		close(fd[1]); //close write pipe
-		force_kill_myself();
+		_exit(0);
 	}
-	else { /*父进程*/
+	else { // father process
 
 		close(fd[1]); //close write pipe
 
 		int status;
-		/* 等待目标进程停止或终止. WUNTRACED - 解释见参考手册 */
-		if (waitpid(pid, &status,  WUNTRACED) < 0 && errno != EACCES) { return -6; }
+		
+		if (waitpid(pid, &status, WUNTRACED) < 0 && errno != EACCES) {
+			return -1003;
+		}
 
-		int ret = -1002;
+		int ret = -1004;
 		read(fd[0], (void*)&ret, sizeof(ret));
 		close(fd[0]); //close read pipe
 		return ret;
 	}
-	return -1003;
+	return -1005;
 }
-
 
 #endif /* TEST_ROOT_H_ */

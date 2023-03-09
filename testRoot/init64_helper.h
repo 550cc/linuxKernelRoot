@@ -1,23 +1,34 @@
-#ifndef INIT64_HELPER_H_
+ï»¿#ifndef INIT64_HELPER_H_
 #define INIT64_HELPER_H_
 #include <unistd.h>
 #include "process64_inject.h"
 
-//×¢Èëinit64½ø³ÌÔ¶³ÌÖ´ĞĞÃüÁî£¬±¸×¢£º´ËÃüÁî»á×Ô¶¯ÌáÈ¨µ½ROOT¡¢²¢ÇÒ¹Ø±ÕSELinux¡£½áÊøÔËĞĞºó¿É¸ù¾İ×Ô¼ºµÄĞèÒª¾ö¶¨ÊÇ·ñÊÖ¶¯ÖØĞÂ´ò¿ªSELinux
-ssize_t inject_init64_run_cmd_wrapper(
-	unsigned int root_key,
+
+//æ³¨å…¥init64è¿›ç¨‹è¿œç¨‹æ‰§è¡Œå‘½ä»¤ï¼Œå¤‡æ³¨ï¼šæ­¤å‘½ä»¤ä¼šè‡ªåŠ¨ææƒåˆ°ROOTã€å¹¶ä¸”å…³é—­SELinuxã€‚ç»“æŸè¿è¡Œåå¯æ ¹æ®è‡ªå·±çš„éœ€è¦å†³å®šæ˜¯å¦æ‰‹åŠ¨é‡æ–°æ‰“å¼€SELinux
+static ssize_t inject_init64_run_cmd_wrapper(
+	const char* str_root_key,
 	const char *cmd,
 	const char* p_out_result_buf = NULL,
-	size_t out_result_buf_size = 0) {
-	return inject_process64_run_cmd_wrapper(root_key, 1, cmd, p_out_result_buf, out_result_buf_size, false, false, false, NULL, false, NULL);
+	size_t out_result_buf_size = 0,
+	bool  = true) {
+	pid_t target_pid = 1;
+	return inject_process64_run_cmd_wrapper(str_root_key, target_pid,
+											cmd, p_out_result_buf, out_result_buf_size,
+											false, false, false,
+											NULL, false, NULL);
 }
 
-//fork°²È«°æ±¾£¨¿ÉÓÃÓÚ°²×¿APPÖ±½Óµ÷ÓÃ£©
-ssize_t safe_inject_init64_run_cmd_wrapper(
-	unsigned int root_key,
+//forkå®‰å…¨ç‰ˆæœ¬ï¼ˆå¯ç”¨äºå®‰å“APPç›´æ¥è°ƒç”¨ï¼‰
+static ssize_t safe_inject_init64_run_cmd_wrapper(
+	const char* str_root_key,
 	const char *cmd,
 	const char* p_out_result_buf = NULL,
-	size_t out_result_buf_size = 0) {
-	return safe_inject_process64_run_cmd_wrapper(root_key, 1, cmd, p_out_result_buf, out_result_buf_size, false, false, false, NULL, false, NULL);
+	size_t out_result_buf_size = 0,
+	bool  = true) {
+	pid_t target_pid = 1;
+	return safe_inject_process64_run_cmd_wrapper(str_root_key, target_pid,
+												 cmd, p_out_result_buf, out_result_buf_size,
+												 false, false, false,
+												 NULL, false, NULL);
 }
 #endif /* INIT64_HELPER_H_ */

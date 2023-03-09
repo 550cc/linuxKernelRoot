@@ -22,4 +22,5 @@
     <style name="SmallText" parent="@android:style/TextAppearance.Small">
         <item name="android:textColor">#ffffffff</item>
     </style>
+
 </resources>
